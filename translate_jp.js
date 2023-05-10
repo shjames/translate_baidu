@@ -3,8 +3,8 @@ const crypto = require("crypto");
 function md5Hnndler(content, md5) {
   return md5.update(content).digest("hex");
 }
-const trans_result_all = {}
-const trans_result_error_all = {}
+const trans_result_all = {};
+const trans_result_error_all = {};
 
 const axios = require("axios");
 const fse = require("fs-extra");
@@ -14,20 +14,18 @@ const replenish_jp = [];
 for (let key in replenish.replenish_jp) {
   replenish_jp.push(replenish.replenish_jp[key]);
 }
-
-getToken()
-const OUT_PATH = "./export_jp.json";
-const OUT_PATH_error = "./export_jp_error.json";
+getToken();
+const OUT_PATH = "./export.json";
+const OUT_PATH_error = "./export_error.json";
 
 function getToken() {
   if (!replenish_jp.length) {
     //如果数组为空，则代表代表已经翻译完成，调用genarateData 输出文件
-    genarateData(trans_result_all, OUT_PATH)
+    genarateData(trans_result_all, OUT_PATH);
     if (trans_result_error_all.length) {
-      genarateData(trans_result_error_all, OUT_PATH_error)
+      genarateData(trans_result_error_all, OUT_PATH_error);
     }
   } else {
-
     // 每次取出数组最后一项进行翻译
     const popValue = replenish_jp.pop();
     const sign = `20230430001662173${popValue}${new Date().getTime()}ciMe2I4FFYDlCRNmLN66`;
@@ -46,7 +44,9 @@ Step2. 对字符串 1 做 MD5 ，得到 32 位小写的 sign。示例： q=apple
      salt=1435660288（随机码）
      平台分配的密钥: 12345678，sign=MD5(2015063000000001apple143566028812345678)，得到sign=f89f9594663708c1605f3d736d01d2d4
      */
-    const BACK_GATEWAY = `http://api.fanyi.baidu.com/api/trans/vip/translate?q=${popValue}&from=zh&to=jp&appid=20230430001662173&salt=${new Date().getTime()}&sign=${md5Hnndler(
+    const BACK_GATEWAY = `http://api.fanyi.baidu.com/api/trans/vip/translate?q=${popValue}&from=zh&to=${
+      process.env.TRANSLATE_LANG
+    }&appid=20230430001662173&salt=${new Date().getTime()}&sign=${md5Hnndler(
       sign,
       crypto.createHash("md5")
     )}`;
@@ -62,27 +62,24 @@ Step2. 对字符串 1 做 MD5 ，得到 32 位小写的 sign。示例： q=apple
           // 如果请求翻译接口没有报错，即是成功，则记录下翻译的结果
           for (let key in replenish.replenish_jp) {
             if (replenish.replenish_jp[key] === res.data.trans_result[0].src) {
-              trans_result_all[key] = res.data.trans_result[0].dst
+              trans_result_all[key] = res.data.trans_result[0].dst;
             }
           }
-
-
         } else {
           // 记录错误结果
           for (let key in replenish.replenish_jp) {
             if (replenish.replenish_jp[key] === popValue) {
-              trans_result_error_all[key] = popValue
+              trans_result_error_all[key] = popValue;
             }
           }
         }
-        getToken()
+        getToken();
       })
       .catch((e) => {
         //   console.log(e, "\n获取yapi-token接口失败!!!!!!");
         //   process.exit(1);
       });
   }
-
 }
 const listToMap = (list) => {
   const obj = {};
@@ -92,9 +89,7 @@ const listToMap = (list) => {
   return obj;
 };
 const genarateData = (list, OUT_PATH_) => {
-
   fse.writeJsonSync(OUT_PATH_, list, (err, data) => {
     if (err) console.log(err, "\n获取yapi-token失败!!!!!!");
   });
 };
-
